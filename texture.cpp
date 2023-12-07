@@ -11,6 +11,7 @@ Texture::~Texture()
 
 void Texture::load(SDL_Renderer* r, const char* path)
 {
+  if (!path) return;
   sdl_texture = IMG_LoadTexture(r, path);
   if (!sdl_texture) panic(IMG_GetError);
   if (SDL_QueryTexture(sdl_texture, NULL, NULL, &width, &height) != 0) {

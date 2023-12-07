@@ -6,12 +6,16 @@
 #include <vector>
 #include <optional>
 
-class Grid
+class Grid : public Clickable<Grid>
 {
   int rows, cols;
   SDL_Color line_color;
+  V2g cur_hover_pos;
   std::vector<bool> fill_mode_marks;
 
+  void on_mouse_left(V2g gpos);
+  void on_mouse_right(V2g gpos);
+  
 public:
   static constexpr auto line_thickness = 2;
   
@@ -23,7 +27,7 @@ public:
 
   int id;
   V2 pos;
-  V2g prev_cursor_pos;
+  V2g prev_click_pos;
 
   int item_size;
   int item_pad;
@@ -43,8 +47,10 @@ public:
   void clear_marks();
   
   void set_pos(V2 p);
-  SDL_Rect grid_to_rect(V2g gp) const;
+  SDL_Rect cell_to_rect(V2g gp) const;
 
+  void on_hover(V2g gpos);
+  void on_click(V2g gpos);
   void draw();
 };
 

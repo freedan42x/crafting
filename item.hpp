@@ -7,12 +7,12 @@
 
 class Grid;
 
-class Item : public Clickable<Item>, public AnimExpand
+class Item
 {
 public:
   enum Type
   {
-    None,
+    None = -1,
     Leaf,
     Branch,
     Sapling,
@@ -20,23 +20,19 @@ public:
    
     Count
   };
-  
+
   Type type;
   int count;
 
   Item();
   Item(Type type, int count);
 
-  void on_mouse_left(Grid& gr);
-  void on_mouse_right(Grid& gr);
-
-  void update(float dt);
-  void on_hover(Grid& gr, V2g gpos);
-  void on_click(Grid& gr, V2g gpos);
   void draw(Grid& gr, V2g gpos);
   void draw(Grid& gr, V2 pos);
+  void draw(Grid& gr, V2g gpos, SDL_Color bg);
 
   operator bool() const;
+  static const char* type_stringify(Item::Type type);
   friend std::ostream& operator <<(std::ostream& out, const Item& item);
 };
 

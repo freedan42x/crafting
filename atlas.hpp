@@ -7,7 +7,7 @@
 
 class Atlas
 {
-  static const char* item_paths[Item::Count];
+  static std::string item_path(Item::Type type);
 
 public:
   Atlas();

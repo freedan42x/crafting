@@ -48,10 +48,6 @@ void Game::update(float dt)
   // TODO: maybe a better way to manage updates?
   // like store in a vector "Updatable" instances or something
   
-  for (auto& item : inventory.items) item.update(dt);
-  for (auto& item : crafting_grid.items) item.update(dt);
-  for (auto& item : crafting_result.items) item.update(dt);
-  
   atlas.arrow.update(dt);
 
   rummage_leaves.AnimExpand::update(dt);

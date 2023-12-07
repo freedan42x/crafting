@@ -1,7 +1,7 @@
 CXX = clang++
 
 PKGS = sdl2 SDL2_ttf SDL2_image
-FLAGS = -Wall -Wextra -pedantic -std=c++20 -Wno-c99-designator -Wno-reorder-ctor $(shell pkg-config --cflags $(PKGS))
+FLAGS = -Wall -Wextra -pedantic -std=c++20 -Wno-reorder-ctor -g $(shell pkg-config --cflags $(PKGS))
 LIBS = $(shell pkg-config --libs $(PKGS))
 
 OBJDIR = .obj

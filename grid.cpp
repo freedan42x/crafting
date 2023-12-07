@@ -5,7 +5,7 @@ Grid::Grid(int rows, int cols, int item_size, int item_pad, SDL_Color line_color
   : rows(rows), cols(cols),
     line_color(line_color),
     is_result_grid(false),
-    prev_cursor_pos{-1, -1},
+    prev_click_pos{-1}, cur_hover_pos{-1},
     pos{0},
     item_size(item_size), item_pad(item_pad)
 {
@@ -77,12 +77,133 @@ void Grid::set_pos(V2 p)
   pos = p;
 }
 
-SDL_Rect Grid::grid_to_rect(V2g gp) const
+SDL_Rect Grid::cell_to_rect(V2g gp) const
 {
   return {pos.x + gp.x * cell_size() + (gp.x + 1) * line_thickness,
 	  pos.y + gp.y * cell_size() + (gp.y + 1) * line_thickness,
 	  cell_size(),
 	  cell_size()};
+}
+
+void Grid::on_mouse_left(V2g gpos)
+{
+  Item& item = item_at(gpos);
+
+  if (screen.double_click) {
+    if (game.selected_item && !item) {
+      for (auto& it : items) {
+	if (it.type == game.selected_item.type) {
+	  game.selected_item.count += it.count;
+	  it.count = 0;
+	}
+      }
+    } else if (!game.selected_item && item) {
+      int total_count = 0;
+      for (auto& it : items) {
+	if (it.type == item.type) {
+	  total_count += it.count;
+	  it.count = 0;
+	}
+      }
+      item.count = total_count;
+      std::swap(game.selected_item, item);
+    }
+    return;
+  }
+
+  if (is_result_grid) {
+    if (item && !game.selected_item) {
+      std::swap(game.selected_item, item);
+    }
+    return;
+  }
+
+  if (item && game.selected_item && item.type == game.selected_item.type) {
+    item.count += game.selected_item.count;
+    game.selected_item.count = 0;
+  } else {
+    std::swap(game.selected_item, item);
+  }
+}
+
+void Grid::on_mouse_right(V2g gpos)
+{
+  Item& item = item_at(gpos);
+  
+  if (is_result_grid) return;
+  
+  if (item.count <= 0) {
+    if (game.selected_item) {
+      item = game.selected_item;
+      item.count = 1;
+      game.selected_item.count--;
+    }
+    return;
+  }
+
+  if (game.selected_item) {
+    if (item.type == game.selected_item.type) {
+      item.count++;
+      game.selected_item.count--;
+    } else {
+      std::swap(game.selected_item, item);
+    }
+    return;
+  }
+
+  if (item.count == 1) {
+    std::swap(game.selected_item, item);
+  } else {
+    game.selected_item = item;
+    game.selected_item.count /= 2;
+    item.count -= game.selected_item.count;
+  }
+}
+
+void Grid::on_hover(V2g gpos)
+{
+  cur_hover_pos = gpos;
+  
+  if (prev_click_pos == gpos) return;
+
+  Item& item = item_at(gpos);
+
+  if (game.grid_fill_mode && game.selected_item && !is_marked(gpos)) {
+    if (!item) {
+      item = game.selected_item;
+      item.count = 1;
+      game.selected_item.count--;
+      mark(gpos);
+      prev_click_pos = gpos;
+    } else if (item.type == game.selected_item.type) {
+      item.count++;
+      game.selected_item.count--;
+      mark(gpos);
+      prev_click_pos = gpos;
+    }
+  }
+}
+
+void Grid::on_click(V2g gpos)
+{
+  bool down = screen.mouse_event.type == SDL_MOUSEBUTTONDOWN;
+  bool up = screen.mouse_event.type == SDL_MOUSEBUTTONUP;
+  bool left = screen.mouse_event.button == SDL_BUTTON_LEFT;
+  bool right = screen.mouse_event.button == SDL_BUTTON_RIGHT;
+
+  if (down) {
+    if (left) on_mouse_left(gpos);
+    else if (right && !is_marked(gpos)) on_mouse_right(gpos);
+    else return;
+
+    prev_click_pos = gpos;
+    game.prev_grid_id = id;
+
+  } else if (up) {
+    if (gpos == prev_click_pos && game.prev_grid_id == id) return;
+
+    if (left) on_mouse_left(gpos);
+  }
 }
 
 void Grid::draw()
@@ -105,11 +226,20 @@ void Grid::draw()
     SDL_RenderDrawRect(screen.renderer, &r);
   }
 
+  cur_hover_pos = {-1};
+  
   for (auto x = 0; x < cols; x++) {
     for (auto y = 0; y < rows; y++) {
       V2g gpos{x, y};
 
-      item_at(gpos).draw(*this, gpos);
+      SDL_Rect r = cell_to_rect(gpos);
+      Clickable::handle_region(r, gpos);
+
+      if (cur_hover_pos == gpos) {
+	item_at(gpos).draw(*this, gpos, {85, 66, 94, 255});
+      } else {
+	item_at(gpos).draw(*this, gpos);
+      }
     }
   }
 
