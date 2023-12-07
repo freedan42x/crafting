@@ -1,5 +1,4 @@
 #include "recipe.hpp"
-#include <cstring>
 
 Recipe::Recipe(Item result, const char* row1, const char* row2, const char* row3, std::unordered_map<char, Item::Type> binds)
   : result(result)
