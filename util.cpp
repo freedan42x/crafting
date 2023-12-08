@@ -37,3 +37,8 @@ bool V2g::operator !=(const V2g& other) const
 {
   return x != other.x || y != other.y;
 }
+
+std::ostream& operator <<(std::ostream& out, const V2g gpos)
+{
+  return out << "V2g{" << gpos.x << ", " << gpos.y << "}";
+}

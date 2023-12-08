@@ -4,10 +4,10 @@
 #include "item.hpp"
 #include "SDL2/SDL.h"
 #include <vector>
-#include <optional>
 
 class Grid : public Clickable<Grid>
 {
+protected:
   int rows, cols;
   SDL_Color line_color;
   V2g cur_hover_pos;
@@ -15,15 +15,13 @@ class Grid : public Clickable<Grid>
 
   void on_mouse_left(V2g gpos);
   void on_mouse_right(V2g gpos);
-  
+
 public:
   static constexpr auto line_thickness = 2;
-  
+
   Grid(int rows, int cols, int item_size, int item_pad, SDL_Color line_color={209, 201, 178, 255});
 
   std::vector<Item> items;
-  // TODO class ResultGrid : Grid with crafting support
-  bool is_result_grid; // meaning you can't put items in it, only take
 
   int id;
   V2 pos;
@@ -49,9 +47,29 @@ public:
   void set_pos(V2 p);
   SDL_Rect cell_to_rect(V2g gp) const;
 
-  void on_hover(V2g gpos);
-  void on_click(V2g gpos);
+  virtual void on_hover(V2g gpos);
+  virtual void on_click(V2g gpos);
   void draw();
+};
+
+class CraftingGrid : public Grid
+{
+public:
+  CraftingGrid(int rows, int cols, int item_size, int item_pad, SDL_Color line_color={209, 201, 178, 255});
+
+  void on_hover(V2g gpos) override;
+  void on_click(V2g gpos) override;
+};
+
+class ResultGrid : public Grid
+{
+public:
+  ResultGrid(int rows, int cols, int item_size, int item_pad, SDL_Color line_color={245, 49, 150, 255});
+
+  void refresh();
+
+  void on_hover(V2g gpos) override;
+  void on_click(V2g gpos) override;
 };
 
 #endif

@@ -39,7 +39,6 @@ Game::Game()
     crafting_result{1, 1, 32, 8, {245, 49, 150, 255}},
     arrow_pos{0}
 {
-  crafting_result.is_result_grid = true;
   on_resize();
 }
 

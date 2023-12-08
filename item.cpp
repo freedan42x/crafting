@@ -12,9 +12,11 @@ Item::Item(Type type, int count)
   this->count = count;
 }
 
+Item item_none;
+
 void Item::draw(Grid& gr, V2g gpos)
 {
-  if (count <= 0) return;
+  if (!*this || type == None) return;
 
   SDL_Rect r = gr.cell_to_rect(gpos);
   SDL_Rect dst = {r.x + gr.item_pad, r.y + gr.item_pad, gr.item_size, gr.item_size};
@@ -37,6 +39,8 @@ void Item::draw(Grid& gr, V2g gpos)
 
 void Item::draw(Grid& gr, V2 pos)
 {
+  if (!*this || type == None) return;
+  
   atlas.items.at(type).draw(screen.renderer, pos);
 
   // TODO: proper font rendering interface

@@ -37,6 +37,7 @@ struct V2g
 
   bool operator ==(const V2g& other) const;
   bool operator !=(const V2g& other) const;
+  friend std::ostream& operator <<(std::ostream& out, const V2g gpos);
 };
 
 #endif

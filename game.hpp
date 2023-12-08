@@ -4,8 +4,6 @@
 #include "timed.hpp"
 #include "grid.hpp"
 #include "SDL2/SDL.h"
-#include <vector>
-#include <optional>
 
 class RummageLeaves : public Clickable<RummageLeaves>, public AnimExpand, public Timed<RummageLeaves>
 {
@@ -30,8 +28,8 @@ public:
   bool grid_fill_mode;
 
   Grid inventory;
-  Grid crafting_grid;
-  Grid crafting_result;
+  CraftingGrid crafting_grid;
+  ResultGrid crafting_result;
 
   RummageLeaves rummage_leaves;
 

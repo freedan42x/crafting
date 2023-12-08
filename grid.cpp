@@ -1,10 +1,10 @@
 #include "grid.hpp"
 #include "game.hpp"
+#include "recipe.hpp"
 
 Grid::Grid(int rows, int cols, int item_size, int item_pad, SDL_Color line_color)
   : rows(rows), cols(cols),
     line_color(line_color),
-    is_result_grid(false),
     prev_click_pos{-1}, cur_hover_pos{-1},
     pos{0},
     item_size(item_size), item_pad(item_pad)
@@ -33,7 +33,7 @@ int Grid::total_height() const
 bool Grid::add_item(Item item)
 {
   for (auto& i : items) {
-    if (i.count <= 0) {
+    if (!i) {
       i = item;
       return true;
     }
@@ -43,6 +43,7 @@ bool Grid::add_item(Item item)
 
 bool Grid::add_random_item()
 {
+  // TODO: change to C++ way
   Item::Type tp = static_cast<Item::Type>(rand() % Item::Count);
   return add_item({tp, 1});
 }
@@ -92,28 +93,21 @@ void Grid::on_mouse_left(V2g gpos)
   if (screen.double_click) {
     if (game.selected_item && !item) {
       for (auto& it : items) {
-	if (it.type == game.selected_item.type) {
+	if (it && it.type == game.selected_item.type) {
 	  game.selected_item.count += it.count;
 	  it.count = 0;
 	}
       }
     } else if (!game.selected_item && item) {
-      int total_count = 0;
+      Item collected{item.type, 0};
       for (auto& it : items) {
-	if (it.type == item.type) {
-	  total_count += it.count;
+	if (it && it.type == item.type) {
+	  collected.count += it.count;
 	  it.count = 0;
 	}
       }
-      item.count = total_count;
-      std::swap(game.selected_item, item);
-    }
-    return;
-  }
-
-  if (is_result_grid) {
-    if (item && !game.selected_item) {
-      std::swap(game.selected_item, item);
+      
+      std::swap(game.selected_item, collected);
     }
     return;
   }
@@ -130,9 +124,7 @@ void Grid::on_mouse_right(V2g gpos)
 {
   Item& item = item_at(gpos);
   
-  if (is_result_grid) return;
-  
-  if (item.count <= 0) {
+  if (!item) {
     if (game.selected_item) {
       item = game.selected_item;
       item.count = 1;
@@ -160,11 +152,15 @@ void Grid::on_mouse_right(V2g gpos)
   }
 }
 
+// TODO: right-click on item is now wrong (*)
 void Grid::on_hover(V2g gpos)
 {
   cur_hover_pos = gpos;
-  
-  if (prev_click_pos == gpos) return;
+
+  // (*) cuz removed the line here
+  // if (gpos == prev_click_pos) return;
+  // but otherwise with fill mode you can actually put 2 items into same slot
+  // if you start from prev_click_pos (cuz in that case it is not mark()`ed)
 
   Item& item = item_at(gpos);
 
@@ -245,5 +241,60 @@ void Grid::draw()
 
   if (game.selected_item) {
     game.selected_item.draw(*this, screen.mouse);
+  }
+}
+
+CraftingGrid::CraftingGrid(int rows, int cols, int item_size, int item_pad, SDL_Color line_color)
+  : Grid{rows, cols, item_size, item_pad, line_color}
+{ }
+
+void CraftingGrid::on_hover(V2g gpos)
+{
+  V2g cur_click_pos = prev_click_pos;
+  Grid::on_hover(gpos);
+
+  if (prev_click_pos != cur_click_pos) {
+    game.crafting_result.refresh();
+  }
+}
+
+void CraftingGrid::on_click(V2g gpos)
+{
+  Grid::on_click(gpos);
+
+  game.crafting_result.refresh();
+}
+
+ResultGrid::ResultGrid(int rows, int cols, int item_size, int item_pad, SDL_Color line_color)
+  : Grid{rows, cols, item_size, item_pad, line_color}
+{ }
+
+void ResultGrid::refresh()
+{
+  items[0] = check_recipe(game.crafting_grid.items);
+}
+
+void ResultGrid::on_hover(V2g gpos)
+{
+  cur_hover_pos = gpos;
+}
+
+void ResultGrid::on_click(V2g gpos)
+{
+  bool down = screen.mouse_event.type == SDL_MOUSEBUTTONDOWN;
+  bool left = screen.mouse_event.button == SDL_BUTTON_LEFT;
+
+  if (down && left) {
+    game.prev_grid_id = id;
+    
+    Item& item = item_at(gpos);
+    // TODO: if selected_item and of same type, add to it from result
+    if (item && !game.selected_item) {
+      std::swap(game.selected_item, item);
+      for (auto& it : game.crafting_grid.items) {
+	if (it) it.count--;
+      }
+      refresh();
+    }
   }
 }

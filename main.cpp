@@ -12,6 +12,7 @@ int main()
   // TODO: shift-click for crafting_grid and crafting_result to quickly transfer them to inventory
   // TODO: make add_item() handle if inventory has that item type already, in that case add to that slot
 
+  // **TODO: change Makefile so that changing header triggers rebuilding
   // *TODO: recipe book
   // *TODO: 2nd tab for lab-like tree growing
   screen.main_loop();
